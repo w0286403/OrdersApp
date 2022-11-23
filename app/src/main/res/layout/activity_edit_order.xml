@@ -45,10 +45,10 @@
                     android:width="200dp"
                     android:height="55dp"
                     android:ems="10"
-                    android:gravity="start|right"
+                    android:gravity="start"
+                    android:importantForAutofill="no"
                     android:inputType="textPersonName"
-                    tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck"
-                    android:importantForAutofill="no" />
+                    tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
                 <EditText
                     android:id="@+id/et_number"
@@ -58,9 +58,10 @@
                     android:width="200dp"
                     android:height="55dp"
                     android:ems="10"
-                    android:gravity="start|right"
-                    android:inputType="textPersonName"
-                    tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
+                    android:gravity="start"
+                    android:inputType="number"
+                    tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck"
+                    android:importantForAutofill="no" />
 
                 <EditText
                     android:id="@+id/et_address"
@@ -70,16 +71,17 @@
                     android:width="200dp"
                     android:height="55dp"
                     android:ems="10"
-                    android:gravity="start|right"
+                    android:gravity="start"
                     android:inputType="textPersonName"
-                    tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+                    tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck"
+                    android:importantForAutofill="no" />
 
                 <Spinner
                     android:id="@+id/spinner_size"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_margin="8dp"
-                    android:gravity="start|right"
+                    android:gravity="start"
                     tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
                 <CheckBox
@@ -88,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="3dp"
                     android:layout_weight="1"
-                    android:gravity="start|right"
+                    android:gravity="start"
                     tools:ignore="DuplicateSpeakableTextCheck" />
 
                 <CheckBox
@@ -97,7 +99,7 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="3dp"
                     android:layout_weight="1"
-                    android:gravity="start|right"
+                    android:gravity="start"
                     android:minWidth="0dp" />
 
                 <CheckBox
@@ -108,7 +110,7 @@
                     android:layout_weight="1"
                     android:width="48dp"
                     android:height="48dp"
-                    android:gravity="start|right"
+                    android:gravity="start"
                     android:minWidth="48dp" />
 
                 <CheckBox
@@ -118,7 +120,7 @@
                     android:layout_margin="3dp"
                     android:layout_weight="1"
                     android:height="48dp"
-                    android:gravity="start|right" />
+                    android:gravity="start" />
 
                 <CheckBox
                     android:id="@+id/cb_pineapple"
@@ -127,7 +129,8 @@
                     android:layout_margin="3dp"
                     android:layout_weight="1"
                     android:height="48dp"
-                    android:gravity="start|right" />
+                    android:gravity="start"
+                    tools:ignore="TouchTargetSizeCheck" />
 
                 <CheckBox
                     android:id="@+id/cb_jalapeno"
@@ -136,7 +139,7 @@
                     android:layout_margin="3dp"
                     android:layout_weight="1"
                     android:height="48dp"
-                    android:gravity="start|right" />
+                    android:gravity="start" />
 
             </LinearLayout>
         </ScrollView>
