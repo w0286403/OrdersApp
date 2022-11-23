@@ -14,10 +14,10 @@
         android:theme="@style/Theme.OrdersApp"
         tools:targetApi="31">
         <activity
-            android:name=".OrderActivity"
+            android:name=".LogActivity"
             android:exported="false" />
         <activity
-            android:name=".LogActivity"
+            android:name=".OrderActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

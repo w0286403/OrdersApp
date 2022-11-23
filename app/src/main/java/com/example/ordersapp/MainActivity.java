@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     prefsEditor.putString(LANGUAGE_KEY, "english");
                 }
-                prefsEditor.commit();//save the settings
+                prefsEditor.apply();//save the settings
                 setText();//Set the text on screen
                 //Show to the user that it has been saved
                 Toast.makeText(getBaseContext(), "Saved", Toast.LENGTH_LONG).show();
