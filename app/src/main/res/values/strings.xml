@@ -24,6 +24,9 @@
         <item>All Orders</item>
         <item>Select Order</item>
         <item>Back</item>
+        <item>Order #</item>
+        <item>Update</item>
+        <item>Delete</item>
     </string-array>
 
     <string-array name="french">
@@ -47,5 +50,8 @@
         <item>Toutes Les Commandes</item>
         <item>Choisissez Commandes</item>
         <item>Retour</item>
+        <item>Ordre #</item>
+        <item>Réactualiser</item>
+        <item>Effacer</item>
     </string-array>
 </resources>
