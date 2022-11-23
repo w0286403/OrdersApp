@@ -4,15 +4,108 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fadingEdge="horizontal|vertical"
+    android:forceDarkAllowed="false"
+    android:foregroundTint="#81FFFFFF"
+    android:theme="@style/Theme.OrdersApp"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="410dp"
+        android:layout_height="846dp"
+        android:theme="@style/Theme.OrdersApp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/img_homeBackground"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/contDesc_img_landingBackground"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/oven_img" />
+
+        <TextView
+            android:id="@+id/tv_restaurantName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:height="200sp"
+            android:elegantTextHeight="true"
+            android:fontFamily="serif"
+            android:freezesText="false"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:outlineAmbientShadowColor="#454444"
+            android:shadowColor="#333333"
+            android:shadowRadius="95"
+            android:textAllCaps="false"
+            android:textColor="#E8E5E5"
+            android:textSize="50sp"
+            android:typeface="serif" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_pizzaBuilder"
+            android:layout_width="312dp"
+            android:layout_height="69dp"
+            android:layout_alignWithParentIfMissing="false"
+            android:layout_below="@id/tv_restaurantName"
+            android:layout_alignStart="@id/tv_restaurantName"
+            android:layout_alignParentTop="false"
+
+            android:layout_centerInParent="true"
+            android:layout_marginStart="49dp"
+            android:layout_marginTop="38dp"
+            android:width="300sp"
+            android:background="@drawable/rounded_corner_btn"
+            android:fontFamily="sans-serif-smallcaps"
+            android:gravity="center|center_horizontal|center_vertical"
+            android:textColor="#1B1A1A"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:ignore="SpeakableTextPresentCheck" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_viewOrders"
+            android:layout_width="312dp"
+            android:layout_height="69dp"
+            android:layout_alignWithParentIfMissing="false"
+            android:layout_below="@id/tv_restaurantName"
+            android:layout_alignStart="@id/tv_restaurantName"
+            android:layout_alignParentTop="false"
+            android:layout_centerInParent="true"
+
+            android:layout_marginStart="49dp"
+            android:layout_marginTop="135dp"
+            android:width="300sp"
+            android:background="@drawable/rounded_corner_btn"
+            android:fontFamily="sans-serif-smallcaps"
+            android:gravity="center|center_horizontal|center_vertical"
+            android:textColor="#1B1A1A"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:ignore="SpeakableTextPresentCheck" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_lang"
+            android:layout_width="145dp"
+            android:layout_height="wrap_content"
+            android:layout_alignWithParentIfMissing="false"
+            android:layout_below="@id/tv_restaurantName"
+            android:layout_alignStart="@id/tv_restaurantName"
+            android:layout_alignParentTop="false"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="254dp"
+
+            android:layout_marginTop="439dp"
+            android:width="300sp"
+            android:background="@drawable/rounded_corner_btn"
+            android:fontFamily="sans-serif-smallcaps"
+            android:gravity="center|center_horizontal|center_vertical"
+            android:text="@string/btn_lang"
+            android:textColor="#1B1A1A"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
