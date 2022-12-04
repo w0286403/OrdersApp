@@ -1,11 +1,19 @@
 package com.example.ordersapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.database.Cursor;
 import android.os.*;
 import android.widget.*;
 import android.view.*;
 import android.content.*;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
@@ -17,6 +25,22 @@ public class MainActivity extends AppCompatActivity {
     String[] language; //Holds the string array
     static String LANGUAGE_KEY = "language_key";
     SharedPreferences prefs;
+
+    enum Topping {
+        NO_TOPPING,
+        PEPPERONI,
+        OLIVES,
+        BELLPEPPER,
+        FETA,
+        PINEAPPLE,
+        JALAPENO
+    }
+
+    enum Size {
+        SMALL,
+        MEDIUM,
+        LARGE
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });//End of on click language button
     }
-
 
     public void setText() {
         //If the key is english, set the language array to be english, otherwise french
