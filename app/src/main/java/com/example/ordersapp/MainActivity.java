@@ -2,14 +2,12 @@ package com.example.ordersapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.database.Cursor;
 import android.os.*;
 import android.widget.*;
 import android.view.*;
 import android.content.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     static String LANGUAGE_KEY = "language_key";
     SharedPreferences prefs;
 
+    //Enums to hold in database
     enum Topping {
         NO_TOPPING,
         PEPPERONI,
@@ -59,6 +58,16 @@ public class MainActivity extends AppCompatActivity {
 
         //Set text on screen depending on preference
         setText();
+
+        try{
+            String destPath = "/data/data/" + getPackageName() +"/database/OrderDB.db";
+            File f = new File(destPath);
+            if(!f.exists()){
+                CopyDB(getBaseContext().getAssets().open("OrderDB.db"), new FileOutputStream(destPath));
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        }
 
         btn_pizzaBuilder.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,6 +117,16 @@ public class MainActivity extends AppCompatActivity {
         btn_pizzaBuilder.setText(language[1]);
         btn_viewOrders.setText(language[2]);
     }//End Of Set Text Method
+
+    public void CopyDB(InputStream inputStream, OutputStream outputStream) throws IOException {
+        byte[] buffer = new byte[1024];
+        int length;
+        while((length = inputStream.read(buffer)) > 0) {
+            outputStream.write(buffer,0,length);
+        }
+        inputStream.close();
+        outputStream.close();
+    }//end method CopyDB
 
 
 }//End Of Main

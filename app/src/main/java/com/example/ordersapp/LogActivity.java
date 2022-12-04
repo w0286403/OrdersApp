@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,12 +16,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Objects;
 
 public class LogActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
@@ -32,16 +27,19 @@ public class LogActivity extends AppCompatActivity implements AdapterView.OnItem
     Spinner spinner_size;
     CheckBox cb_pepperoni, cb_olives, cb_bellPepper, cb_feta, cb_pineapple, cb_jalapeno;
 
+    //Arrays to hold toppings values
+    CheckBox[] checkBoxes;
+    MainActivity.Topping[] toppings;
+
     //Create string array for setting text
     String[] language;
     String[] spinner_items = new String[3];
     static String LANGUAGE_KEY = "language_key";
 
+    //To hold the current size selected
     MainActivity.Size currentSize;
-    MainActivity.Topping top1 = MainActivity.Topping.NO_TOPPING;
-    MainActivity.Topping top2 = MainActivity.Topping.NO_TOPPING;
-    MainActivity.Topping top3 = MainActivity.Topping.NO_TOPPING;
 
+    //To make sure toppings don't go over 3
     int numOfToppings = 0;
 
     @Override
@@ -71,6 +69,23 @@ public class LogActivity extends AppCompatActivity implements AdapterView.OnItem
         cb_pineapple.setOnClickListener(onChecked);
         cb_jalapeno.setOnClickListener(onChecked);
 
+        //Fill array with checkboxes
+        checkBoxes = new CheckBox[]{
+                cb_pepperoni,
+                cb_olives,
+                cb_bellPepper,
+                cb_feta,
+                cb_pineapple,
+                cb_jalapeno
+        };
+
+        //Set all toppings to null
+        toppings = new MainActivity.Topping[]{
+                null,
+                null,
+                null
+        };
+
         spinner_size.setOnItemSelectedListener(this);
 
         //Set the text of onscreen widgets
@@ -81,32 +96,31 @@ public class LogActivity extends AppCompatActivity implements AdapterView.OnItem
         ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner_size.setAdapter(ad);
 
-        try{
-            String destPath = "/data/data/" + getPackageName() +"/database/OrderDB.db";
-            File f = new File(destPath);
-            if(!f.exists()){
-                CopyDB(getBaseContext().getAssets().open("OrderDB.db"),
-                        new FileOutputStream(destPath));
-            }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-
+        //Create new adapter object
         DBAdapter adapter = new DBAdapter(this);
 
         btn_submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                if (validateText()){
-                    adapter.open();
-                    adapter.insertOrder(et_name.getText().toString(),et_number.getText().toString(),et_address.getText().toString(),currentSize.ordinal(),top1.ordinal(), top2.ordinal(), top3.ordinal());
-                    adapter.close();
+                if (validateText()){//If the text is valid
+                    checkToppings();//Fill toppings array based on checkboxes
+                    try{
+                        //Open adapter and insert record
+                        //Collect strings from the three edit texts
+                        //Collect the numerical value of the enums for size and toppings
+                        adapter.open();
+                        adapter.insertOrder(et_name.getText().toString(),et_number.getText().toString(),et_address.getText().toString(),currentSize.ordinal(),toppings[0].ordinal(), toppings[1].ordinal(), toppings[2].ordinal());
+                        adapter.close();
+                    }catch (SQLiteException e){
+                        e.printStackTrace();
+                    }catch (Exception e ){
+                        e.printStackTrace();
+                    }
                     //Send to view all orders activity
                     Intent i = new Intent(LogActivity.this, OrderActivity.class);
                     startActivity(i);
                     Toast.makeText(view.getContext(), "A New Order Has Been Created!", Toast.LENGTH_SHORT).show();
-
                 }
             }
         });//End submit on click listener
@@ -124,82 +138,86 @@ public class LogActivity extends AppCompatActivity implements AdapterView.OnItem
     public View.OnClickListener onChecked = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            MainActivity.Topping topping;
                 switch (view.getId()) {
                     case (R.id.cb_pepperoni):
+                        //if is checked and there is 3 toppings, set checkable to false and prompt user
                         if (cb_pepperoni.isChecked() && numOfToppings>=3){
                             cb_pepperoni.setChecked(false);
+                            Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+                        }else{
+                            //Else, if the user is checking or unchecking, add or subtract from the number of toppings appropriately
+                            if (cb_pepperoni.isChecked()){
+                                numOfToppings++;
+                            } else {
+                                numOfToppings--;
+                            }
                         }
-                        topping = MainActivity.Topping.PEPPERONI;
-                        if (cb_pepperoni.isChecked() || numOfToppings != 3) {
-                            numOfToppings++;
-                        } else {
-                            numOfToppings--;
-                        }
-
                         break;
                     case (R.id.cb_olives):
-
                         if (cb_olives.isChecked() && numOfToppings>=3){
                             cb_olives.setChecked(false);
+                            Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+                        }else{
+                            if (cb_olives.isChecked()) {
+                                numOfToppings++;
+                            } else {
+                                numOfToppings--;
+                            }
                         }
-                        topping = MainActivity.Topping.OLIVES;
-                        if (cb_olives.isChecked()) {
-                            numOfToppings++;
-                        } else {
-                            numOfToppings--;
-                        }
-
                         break;
                     case (R.id.cb_bellPepper):
 
                         if (cb_bellPepper.isChecked() && (numOfToppings>=3)){
                             cb_bellPepper.setChecked(false);
-                        }
-                        topping = MainActivity.Topping.BELLPEPPER;
-                        if (cb_bellPepper.isChecked()) {
-                            numOfToppings++;
-                        } else {
-                            numOfToppings--;
-                        }
+                            Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
 
+                        }else{
+                            if (cb_bellPepper.isChecked()) {
+                                numOfToppings++;
+                            } else {
+                                numOfToppings--;
+                            }
+                        }
                         break;
                     case (R.id.cb_feta):
 
                         if ( cb_feta.isChecked() && numOfToppings>=3){
                             cb_feta.setChecked(false);
-                        }
-                        topping = MainActivity.Topping.FETA;
-                        if (cb_feta.isChecked()) {
-                            numOfToppings++;
-                        } else {
-                            numOfToppings--;
-                        }
+                            Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
 
+                        }else{
+                            if (cb_feta.isChecked()) {
+                                numOfToppings++;
+                            } else {
+                                numOfToppings--;
+                            }
+                        }
                         break;
                     case (R.id.cb_pineapple):
                         if (cb_pineapple.isChecked() && numOfToppings>=3){
                             cb_pineapple.setChecked(false);
-                        }
-                        topping = MainActivity.Topping.PINEAPPLE;
-                        if (cb_pineapple.isChecked()) {
-                            numOfToppings++;
-                        } else {
-                            numOfToppings--;
-                        }
+                            Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
 
+                        }else {
+                            if (cb_pineapple.isChecked()) {
+                                numOfToppings++;
+                            } else {
+                                numOfToppings--;
+                            }
+                        }
                         break;
                     case (R.id.cb_jalapeno):
                         if (cb_jalapeno.isChecked() && numOfToppings>=3){
                             cb_jalapeno.setChecked(false);
-                        }
-                        topping = MainActivity.Topping.JALAPENO;
-                        if (cb_jalapeno.isChecked()) {
-                            numOfToppings++;
-                        } else {
-                            numOfToppings--;
-                        }
+                            Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
 
+                        }else{
+                            if (cb_jalapeno.isChecked()) {
+                                numOfToppings++;
+                            } else {
+                                numOfToppings--;
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -250,30 +268,23 @@ public class LogActivity extends AppCompatActivity implements AdapterView.OnItem
     public void onNothingSelected(AdapterView<?> adapterView) {
     }//Spinner method
 
-    public void CopyDB(InputStream inputStream, OutputStream outputStream) throws IOException{
-        byte[] buffer = new byte[1024];
-        int length;
-        while((length = inputStream.read(buffer)) > 0) {
-            outputStream.write(buffer,0,length);
-        }
-        inputStream.close();
-        outputStream.close();
-    }//end method CopyDB
-
     public boolean validateText(){
         boolean willPass = true;
-        String numPattern = "\\d{10}|(?:\\d{3}-){2}\\d{4}|\\(\\d{3}\\)\\d{3}-?\\d{4}";
+        String numPattern = "\\d{10}|(?:\\d{3}-){2}\\d{4}|\\(\\d{3}\\)\\d{3}-?\\d{4}";//Phone number regex
 
+        //if name is not between 0 and 70 characters throw false and prompt with toast
         if (et_name.getText().toString().length() <= 0 ||et_name.getText().toString().length() >= 70 ){
             Toast.makeText(getBaseContext(), "Please make sure text is between 1 & 70 characters.", Toast.LENGTH_LONG).show();
             willPass = false;
         }
 
+        //If number doesnt match regex
         if (!et_number.getText().toString().matches(numPattern)){
             Toast.makeText(getBaseContext(), "Please make sure phone number is a valid 10 digit North American number.", Toast.LENGTH_LONG).show();
             willPass = false;
         }
 
+        //if address is not between 0 and 70 characters throw false and prompt with toast
         if (et_address.getText().toString().length() <= 0 ||et_address.getText().toString().length() >= 70 ){
             Toast.makeText(getBaseContext(), "Please make sure text is between 1 & 70 characters.", Toast.LENGTH_LONG).show();
             willPass = false;
@@ -282,4 +293,26 @@ public class LogActivity extends AppCompatActivity implements AdapterView.OnItem
         return willPass;
     }
 
+    public void checkToppings(){
+        //Loop through each checkbox and see if its checked
+        for (int i = 0; i < checkBoxes.length; i++) {
+            if (checkBoxes[i].isChecked()) {
+                //if checked, loop through each toppings
+                for (int j = 0; j < toppings.length; j++) {
+                    if (toppings[j] == null){
+                        //If the topping it null, assign it to the appropriate enum value for topping based on checkbox
+                        toppings[j] = MainActivity.Topping.values()[i+1];
+                        break;//break through inner loop
+                    }
+                }
+            }
+        }
+        //Loop through each toppings in case fewer than three were selected
+        //Choose No topping for any remaining nulls
+        for (int i = 0; i < toppings.length; i++) {
+            if (toppings[i]==null){
+                toppings[i] = MainActivity.Topping.NO_TOPPING;
+            }
+        }
+    }
 }//End Main Method

@@ -6,6 +6,8 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -16,12 +18,6 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Objects;
 
 public class EditOrderActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
@@ -33,18 +29,21 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
     Spinner spinner_size;
     CheckBox cb_pepperoni, cb_olives, cb_bellPepper, cb_feta, cb_pineapple, cb_jalapeno;
 
+    //Arrays to hold topping info
+    MainActivity.Topping[] toppings;
+    CheckBox[] checkBoxes;
+
     //Create string array for setting text
     String[] language;
     String[] spinner_items = new String[3];
     static String LANGUAGE_KEY = "language_key";
 
-
+    //To set the size
     int size;
     MainActivity.Size currentSize;
 
-    MainActivity.Topping top1 = MainActivity.Topping.NO_TOPPING;
-    MainActivity.Topping top2 = MainActivity.Topping.NO_TOPPING;
-    MainActivity.Topping top3 = MainActivity.Topping.NO_TOPPING;
+    //To make sure toppings don't go over 3
+    int numOfToppings = 0;
 
     @SuppressLint("Range")
     @Override
@@ -52,6 +51,7 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_order);
 
+        //Grabbing id from the intent
         int id = Integer.parseInt(getIntent().getStringExtra("id"));
 
         //Relate all variables to their xml counterparts
@@ -71,19 +71,27 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
         cb_pineapple = findViewById(R.id.cb_pineapple);
         cb_jalapeno = findViewById(R.id.cb_jalapeno);
 
+        cb_pepperoni.setOnClickListener(onChecked);
+        cb_olives.setOnClickListener(onChecked);
+        cb_bellPepper.setOnClickListener(onChecked);
+        cb_feta.setOnClickListener(onChecked);
+        cb_pineapple.setOnClickListener(onChecked);
+        cb_jalapeno.setOnClickListener(onChecked);
+
         spinner_size.setOnItemSelectedListener(this);
 
-        try{
-            String destPath = "/data/data/" + getPackageName() +"/database/OrderDB.db";
-            File f = new File(destPath);
-            if(!f.exists()){
-                CopyDB(getBaseContext().getAssets().open("OrderDB.db"),
-                        new FileOutputStream(destPath));
-            }
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+        //Set the arrays for toppings
+        toppings = new MainActivity.Topping[3];
+        checkBoxes = new CheckBox[]{
+                cb_pepperoni,
+                cb_olives,
+                cb_bellPepper,
+                cb_feta,
+                cb_pineapple,
+                cb_jalapeno
+        };
 
+        //Set adapter object
         DBAdapter adapter = new DBAdapter(this);
 
         //Set the text of onscreen widgets
@@ -94,25 +102,47 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
         ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner_size.setAdapter(ad);
 
-        adapter.open();
-        Cursor c = adapter.getOrder(id);
-        if (c.moveToFirst()){
-            et_name.setText(c.getString(c.getColumnIndex("name")));
-            et_number.setText(c.getString(c.getColumnIndex("number")));
-            et_address.setText(c.getString(c.getColumnIndex("address")));
-            String title = tv_titleSingleOrder.getText() + " " + String.valueOf(id);
-            tv_titleSingleOrder.setText(title);
-            size = c.getInt(c.getColumnIndex("size"));
+        try{
+            //Open adapter and get single order based on the passed id
+            adapter.open();
+            Cursor c = adapter.getOrder(id);
+
+            if (c.moveToFirst()){
+                //Grab all of the info in database and set accordingly with correct objects
+                et_name.setText(c.getString(c.getColumnIndex("name")));
+                et_number.setText(c.getString(c.getColumnIndex("number")));
+                et_address.setText(c.getString(c.getColumnIndex("address")));
+                String title = tv_titleSingleOrder.getText() + " " + String.valueOf(id);
+                tv_titleSingleOrder.setText(title);
+                size = c.getInt(c.getColumnIndex("size"));
+                toppings[0] = MainActivity.Topping.values()[c.getInt(c.getColumnIndex("top1"))];
+                toppings[1] = MainActivity.Topping.values()[c.getInt(c.getColumnIndex("top2"))];
+                toppings[2] = MainActivity.Topping.values()[c.getInt(c.getColumnIndex("top3"))];
+            }
+            adapter.close();//Close the adapter
+        }catch (SQLiteException e){
+            e.printStackTrace();
+        }catch (Exception e ){
+            e.printStackTrace();
         }
 
-        adapter.close();
-
+        //Set the spinner based on number stored in database
         if (size == MainActivity.Size.SMALL.ordinal()){
             spinner_size.setSelection(MainActivity.Size.SMALL.ordinal());
         }else if (size == MainActivity.Size.MEDIUM.ordinal()){
             spinner_size.setSelection(MainActivity.Size.MEDIUM.ordinal());
         }else{
             spinner_size.setSelection(MainActivity.Size.LARGE.ordinal());
+        }
+
+        //Set the appropriate checkboxes to checked based on the numbers given
+        for (int i = 0; i < checkBoxes.length; i++) {
+            for (MainActivity.Topping topping : toppings) {
+                if (i == (topping.ordinal() - 1)) {
+                    checkBoxes[i].setChecked(true);
+                    numOfToppings++;//Increment the number of toppings
+                }
+            }
         }
 
         btn_backToMain.setOnClickListener(new View.OnClickListener() {
@@ -127,35 +157,136 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
         btn_delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                adapter.open();
-                if (adapter.deleteOrder(id)){
-                    Toast.makeText(view.getContext(), "Delete successful.", Toast.LENGTH_SHORT).show();
-                    adapter.close();
-                    Intent i = new Intent(EditOrderActivity.this, OrderActivity.class);
-                    startActivity(i);
-                }else {
-                    Toast.makeText(view.getContext(), "Delete has failed.", Toast.LENGTH_SHORT).show();
+                try{
+                    adapter.open();//Open adapter
+                    if (adapter.deleteOrder(id)){//Try to delete row based on ID and prompt user if successful
+                        Toast.makeText(view.getContext(), "Delete successful.", Toast.LENGTH_SHORT).show();
+                        adapter.close();
+                        //if successful, close adapter and send back to the all orders activity
+                        Intent i = new Intent(EditOrderActivity.this, OrderActivity.class);
+                        startActivity(i);
+                    }else {
+                        Toast.makeText(view.getContext(), "Delete has failed.", Toast.LENGTH_SHORT).show();
+                    }
+                    adapter.close();//close the adapter
+                }catch (SQLiteException e){
+                    e.printStackTrace();
                 }
-                adapter.close();
+
             }
         });
 
         btn_update.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (validateText()){
-                    adapter.open();
-                    if (adapter.updateOrder(id,et_name.getText().toString(),et_number.getText().toString(),
-                            et_address.getText().toString(),currentSize.ordinal(),top1.ordinal(),top2.ordinal(),top3.ordinal())){
-                        Toast.makeText(view.getContext(), "Update successful.", Toast.LENGTH_SHORT).show();
-                    }else{
-                        Toast.makeText(view.getContext(), "Update has failed.", Toast.LENGTH_SHORT).show();
+                try{
+                    if (validateText()){//Make sure all text is valid
+                        checkToppings();//Populate toppings array with whatever is selected
+                        adapter.open();//Open adapter and update the row based on the id. Prompt user with toast
+                        if (adapter.updateOrder(id,et_name.getText().toString(),et_number.getText().toString(),
+                                et_address.getText().toString(),currentSize.ordinal(),toppings[0].ordinal(),toppings[1].ordinal(),toppings[2].ordinal())){
+                            Toast.makeText(view.getContext(), "Update successful.", Toast.LENGTH_SHORT).show();
+                        }else{
+                            Toast.makeText(view.getContext(), "Update has failed.", Toast.LENGTH_SHORT).show();
+                        }
+                        adapter.close();//close the adapter
                     }
-                    adapter.close();
+                }catch (SQLiteException e){
+                    e.printStackTrace();
                 }
+
             }
         });
     }//End on create
+    public View.OnClickListener onChecked = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            switch (view.getId()) {
+                case (R.id.cb_pepperoni):
+                    //if is checked and there is 3 toppings, set checkable to false and prompt user
+                    if (cb_pepperoni.isChecked() && numOfToppings>=3){
+                        cb_pepperoni.setChecked(false);
+                        Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+                    }else{
+                        //Else, if the user is checking or unchecking, add or subtract from the number of toppings appropriately
+                        if (cb_pepperoni.isChecked()){
+                            numOfToppings++;
+                        } else {
+                            numOfToppings--;
+                        }
+                    }
+                    break;
+                case (R.id.cb_olives):
+                    if (cb_olives.isChecked() && numOfToppings>=3){
+                        cb_olives.setChecked(false);
+                        Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+                    }else{
+                        if (cb_olives.isChecked()) {
+                            numOfToppings++;
+                        } else {
+                            numOfToppings--;
+                        }
+                    }
+                    break;
+                case (R.id.cb_bellPepper):
+
+                    if (cb_bellPepper.isChecked() && (numOfToppings>=3)){
+                        cb_bellPepper.setChecked(false);
+                        Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+
+                    }else{
+                        if (cb_bellPepper.isChecked()) {
+                            numOfToppings++;
+                        } else {
+                            numOfToppings--;
+                        }
+                    }
+                    break;
+                case (R.id.cb_feta):
+
+                    if ( cb_feta.isChecked() && numOfToppings>=3){
+                        cb_feta.setChecked(false);
+                        Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+
+                    }else{
+                        if (cb_feta.isChecked()) {
+                            numOfToppings++;
+                        } else {
+                            numOfToppings--;
+                        }
+                    }
+                    break;
+                case (R.id.cb_pineapple):
+                    if (cb_pineapple.isChecked() && numOfToppings>=3){
+                        cb_pineapple.setChecked(false);
+                        Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+
+                    }else {
+                        if (cb_pineapple.isChecked()) {
+                            numOfToppings++;
+                        } else {
+                            numOfToppings--;
+                        }
+                    }
+                    break;
+                case (R.id.cb_jalapeno):
+                    if (cb_jalapeno.isChecked() && numOfToppings>=3){
+                        cb_jalapeno.setChecked(false);
+                        Toast.makeText(getBaseContext(), "Please only choose 3 toppings.", Toast.LENGTH_LONG).show();
+
+                    }else{
+                        if (cb_jalapeno.isChecked()) {
+                            numOfToppings++;
+                        } else {
+                            numOfToppings--;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    };//End on Checked
 
     public void setText() {
         //Create prefs and retrieve language data
@@ -183,20 +314,24 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
         btn_delete.setText(language[22]);
 
     }//End Set Text Method
+
     public boolean validateText(){
         boolean willPass = true;
-        String numPattern = "\\d{10}|(?:\\d{3}-){2}\\d{4}|\\(\\d{3}\\)\\d{3}-?\\d{4}";
+        String numPattern = "\\d{10}|(?:\\d{3}-){2}\\d{4}|\\(\\d{3}\\)\\d{3}-?\\d{4}";//Phone number regex
 
+        //if name is not between 0 and 70 characters throw false and prompt with toast
         if (et_name.getText().toString().length() <= 0 ||et_name.getText().toString().length() >= 70 ){
             Toast.makeText(getBaseContext(), "Please make sure text is between 1 & 70 characters.", Toast.LENGTH_LONG).show();
             willPass = false;
         }
 
+        //If number doesnt match regex
         if (!et_number.getText().toString().matches(numPattern)){
             Toast.makeText(getBaseContext(), "Please make sure phone number is a valid 10 digit North American number.", Toast.LENGTH_LONG).show();
             willPass = false;
         }
 
+        //if address is not between 0 and 70 characters throw false and prompt with toast
         if (et_address.getText().toString().length() <= 0 ||et_address.getText().toString().length() >= 70 ){
             Toast.makeText(getBaseContext(), "Please make sure text is between 1 & 70 characters.", Toast.LENGTH_LONG).show();
             willPass = false;
@@ -205,9 +340,32 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
         return willPass;
     }
 
+    public void checkToppings(){
+        //Loop through each checkbox and see if its checked
+        for (int i = 0; i < checkBoxes.length; i++) {
+            if (checkBoxes[i].isChecked()) {
+                //if checked, loop through each toppings
+                for (int j = 0; j < toppings.length; j++) {
+                    if (toppings[j] == null){
+                        //If the topping it null, assign it to the appropriate enum value for topping based on checkbox
+                        toppings[j] = MainActivity.Topping.values()[i+1];
+                        break;//break through inner loop
+                    }
+                }
+            }
+        }
+        //Loop through each toppings in case fewer than three were selected
+        //Choose No topping for any remaining nulls
+        for (int i = 0; i < toppings.length; i++) {
+            if (toppings[i]==null){
+                toppings[i] = MainActivity.Topping.NO_TOPPING;
+            }
+        }
+    }
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        //Set the current size in spinner
         if (l == 0){
             currentSize = MainActivity.Size.SMALL;
         }else if (l == 1){
@@ -221,14 +379,6 @@ public class EditOrderActivity extends AppCompatActivity implements AdapterView.
     public void onNothingSelected(AdapterView<?> adapterView) {
     }//Spinner method
 
-    public void CopyDB(InputStream inputStream, OutputStream outputStream) throws IOException {
-        byte[] buffer = new byte[1024];
-        int length;
-        while((length = inputStream.read(buffer)) > 0) {
-            outputStream.write(buffer,0,length);
-        }
-        inputStream.close();
-        outputStream.close();
-    }//end method CopyDB
+
 
 }//End Main Method

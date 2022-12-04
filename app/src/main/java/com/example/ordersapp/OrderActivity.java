@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -30,6 +31,8 @@ public class OrderActivity extends AppCompatActivity {
     //Declare string array and key for shared preferences
     String[] language;
     static String LANGUAGE_KEY = "language_key";
+
+    //Variables to select order
     int buttonSelected;
     boolean hasButton;
 
@@ -47,49 +50,47 @@ public class OrderActivity extends AppCompatActivity {
         //Set the text of the widgets on screen
         setText();
 
-        try{
-            String destPath = "/data/data/" + getPackageName() +"/database/OrderDB.db";
-            File f = new File(destPath);
-            if(!f.exists()){
-                CopyDB(getBaseContext().getAssets().open("OrderDB.db"),
-                        new FileOutputStream(destPath));
-            }
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
+        //Create new db adapter object
         DBAdapter adapter = new DBAdapter(this);
 
-        adapter.open();
-        Cursor c = adapter.getAllOrder();
-        if (c.moveToFirst()){
-            do{
-                LinearLayout ll = (LinearLayout)findViewById(R.id.layout2);
+        try{
+            //Open adapter and create a cursor with for every order
+            adapter.open();
+            Cursor c = adapter.getAllOrder();
+            if (c.moveToFirst()){//Move the cursor along
+                do{
+                    //Define layout and parameters to dynamically create buttons
+                    LinearLayout ll = (LinearLayout)findViewById(R.id.layout2);
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT);
 
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                    //Dynamically create button objects with id of each row
+                    Button btn = new Button(this);
+                    btn.setId(c.getInt(c.getColumnIndex("_id")));
+                    final int id = btn.getId();
+                    String text = "# " + String.valueOf(id) + " - " + c.getString( c.getColumnIndex("created_at"));
+                    btn.setText(text);
+                    ll.addView(btn, params);
 
-                Button btn = new Button(this);
-                btn.setId(c.getInt(c.getColumnIndex("_id")));
-                final int id = btn.getId();
+                    //Add on click for each that will select the id of selected button to be passed along
+                    btn = ((Button) findViewById(id));
+                    btn.setOnClickListener(new View.OnClickListener() {
+                        public void onClick(View view) {
+                            Toast.makeText(view.getContext(), "Current order selected = " + id, Toast.LENGTH_SHORT).show();
+                            buttonSelected = id;
+                            hasButton = true;
+                        }
+                    });
 
-                String text = "# " + String.valueOf(id) + " - " + c.getString( c.getColumnIndex("created_at"));
-
-                btn.setText(text);
-                ll.addView(btn, params);
-                btn = ((Button) findViewById(id));
-                btn.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View view) {
-                        Toast.makeText(view.getContext(), "Current order selected = " + id, Toast.LENGTH_SHORT).show();
-                        buttonSelected = id;
-                        hasButton = true;
-                    }
-                });
-
-            }while (c.moveToNext());
+                }while (c.moveToNext());//Move the cursor along
+            }
+            adapter.close();//Close the adapter object
+        }catch (SQLiteException e){
+            e.printStackTrace();
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        adapter.close();
 
         btn_backToMain.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,8 +105,9 @@ public class OrderActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //Send to view single order activity
-                if (hasButton){
+                if (hasButton){//If button has been selected
                     Intent i = new Intent(OrderActivity.this, EditOrderActivity.class);
+                    //Send the id of that row to the view single order activity
                     i.putExtra("id",Integer.toString(buttonSelected));
                     startActivity(i);
                 }
@@ -130,17 +132,5 @@ public class OrderActivity extends AppCompatActivity {
         btn_backToMain.setText(language[19]);
 
     }//End Set Text Method
-
-    public void CopyDB(InputStream inputStream, OutputStream outputStream) throws IOException {
-        byte[] buffer = new byte[1024];
-        int length;
-        while((length = inputStream.read(buffer)) > 0) {
-            outputStream.write(buffer,0,length);
-        }
-        inputStream.close();
-        outputStream.close();
-    }//end method CopyDB
-
-
 
 }//End main method
